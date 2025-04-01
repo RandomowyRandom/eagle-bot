@@ -2,6 +2,7 @@ import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { Logger } from '@sapphire/plugin-logger';
 import '@sapphire/plugin-logger/register';
 import { GatewayIntentBits, Events, ChannelType } from 'discord.js';
+import fetch from 'node-fetch';
 
 const client = new SapphireClient({
 	caseInsensitiveCommands: true,
@@ -13,12 +14,25 @@ const client = new SapphireClient({
 });
 
 // Listen for messages in #general channel
-client.on(Events.MessageCreate, (message) => {
+client.on(Events.MessageCreate, async (message) => {
 	if (message.channel.type === ChannelType.GuildText && 
 		message.channel.name === 'general' && 
 		!message.author.bot) {
 		client.logger.debug(`Message in #general from ${message.author.tag}: ${message.content}`);
 		console.log(message.content);
+		
+		// Send empty request to webhook URL
+		const webhookUrl = process.env.WEBHOOK_URL;
+		if (webhookUrl) {
+			try {
+				await fetch(webhookUrl);
+				client.logger.debug(`Sent webhook request to ${webhookUrl}`);
+			} catch (error) {
+				client.logger.error(`Failed to send webhook request: ${error}`);
+			}
+		} else {
+			client.logger.warn('WEBHOOK_URL environment variable not set');
+		}
 	}
 });
 
