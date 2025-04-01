@@ -1,7 +1,7 @@
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { Logger } from '@sapphire/plugin-logger';
 import '@sapphire/plugin-logger/register';
-import { GatewayIntentBits } from 'discord.js';
+import { GatewayIntentBits, Events, ChannelType } from 'discord.js';
 
 const client = new SapphireClient({
 	caseInsensitiveCommands: true,
@@ -12,6 +12,16 @@ const client = new SapphireClient({
 	loadMessageCommandListeners: true
 });
 
+// Listen for messages in #general channel
+client.on(Events.MessageCreate, (message) => {
+	if (message.channel.type === ChannelType.GuildText && 
+		message.channel.name === 'general' && 
+		!message.author.bot) {
+		client.logger.debug(`Message in #general from ${message.author.tag}: ${message.content}`);
+		console.log(message.content);
+	}
+});
+
 const main = async () => {
 	try {
 		client.logger.info('Logging in');
@@ -19,13 +29,13 @@ const main = async () => {
 		client.logger.info('Logged in');
 	} catch (error) {
 		client.logger.fatal(error);
-		client.destroy();
+		await client.destroy();
 		process.exit(1);
 	}
 };
 
 main().catch((error) => {
 	client.logger.fatal(error);
-	client.destroy();
+	void client.destroy();
 	process.exit(1);
 });
